@@ -3,13 +3,21 @@ package main
 import (
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 )
 
-func (app *application) routes() *httprouter.Router {
-	r := httprouter.New()
+func (app *application) routes() chi.Router {
 
-	r.HandlerFunc(http.MethodGet, "/v1/healthcheck", app.healthcheckHandler)
+	r := chi.NewRouter()
+
+	r.Get("/v1/healthcheck", app.healthcheckHandler)
+
+	// group route
+	r.Route("/todo", func(r chi.Router) {
+		r.Get("/all", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("Hello from the group route\n"))
+		})
+	})
 
 	return r
 }

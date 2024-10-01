@@ -20,3 +20,5 @@ tasks:
   psql:
     cmds:
       - docker exec -it todo-database psql -U postgres
+  
+  

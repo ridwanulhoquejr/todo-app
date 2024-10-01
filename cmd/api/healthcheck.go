@@ -1,11 +1,15 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 )
 
 func (app *application) healthcheckHandler(w http.ResponseWriter, r *http.Request) {
 
-	fmt.Fprintf(w, "succesfully ping\n")
+	w.Header().Set("Content-Type", "application/json")
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Hello Chi!"))
+
+	// fmt.Fprintf(w, "succesfully ping\n")
 }
