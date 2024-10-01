@@ -16,3 +16,7 @@ tasks:
   run:
     cmds:
       - docker-compose up --build
+  
+  psql:
+    cmds:
+      - docker exec -it todo-database psql -U postgres
