@@ -1,8 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
+
+	"github.com/ridwanulhoquejr/todo-app/internal/db"
 )
 
 // Define an application struct to hold the dependencies for our HTTP handlers, helpers,
@@ -26,7 +29,22 @@ func main() {
 		config: cfg.configs(),
 		logger: logger,
 	}
-	err := app.serve()
+
+	// db connection
+	db, err := db.NewDatabase()
+	if err != nil {
+		fmt.Printf("Failed to connect with database: %w", err)
+		return
+	}
+	defer db.DB.Close()
+
+	if err := db.MigrateDB(); err != nil {
+		fmt.Printf("Failed to migrate the database: %w", err)
+		return
+	}
+	fmt.Println("Succesfully ping the database")
+
+	err = app.serve()
 
 	if err != nil {
 		logger.Print(err)
