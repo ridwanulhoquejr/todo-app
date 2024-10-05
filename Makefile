@@ -15,3 +15,6 @@ psql:
 migrate_cli:
 	@read -p "Enter migration name: " name; \
 	migrate create -seq -ext=.sql -dir=./migrations $$name
+
+docker_up:
+	docker-compose up

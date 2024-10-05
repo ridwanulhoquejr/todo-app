@@ -33,7 +33,7 @@ func main() {
 	// db connection
 	db, err := db.NewDatabase()
 	if err != nil {
-		fmt.Printf("Failed to connect with database: %w", err)
+		logger.Fatal("Failed to connect with database: %w", err)
 		return
 	}
 	defer db.DB.Close()
