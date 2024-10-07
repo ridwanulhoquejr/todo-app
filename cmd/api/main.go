@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
+	"github.com/ridwanulhoquejr/todo-app/internal/data"
 	"github.com/ridwanulhoquejr/todo-app/internal/db"
 )
 
@@ -14,6 +14,7 @@ import (
 type application struct {
 	config *config
 	logger *log.Logger
+	models *data.Models
 }
 
 func main() {
@@ -21,14 +22,6 @@ func main() {
 	// Initialize a new logger which writes messages to the standard out stream,
 	// prefixed with the current date and time.
 	logger := log.New(os.Stdout, "Todo API: ", log.Ldate|log.Ltime)
-
-	// initialize a config var
-	var cfg config
-
-	app := &application{
-		config: cfg.configs(),
-		logger: logger,
-	}
 
 	// db connection
 	db, err := db.NewDatabase()
@@ -38,11 +31,20 @@ func main() {
 	}
 	defer db.DB.Close()
 
-	if err := db.MigrateDB(); err != nil {
-		fmt.Printf("Failed to migrate the database: %w", err)
-		return
+	// if err := db.MigrateDB(); err != nil {
+	// 	fmt.Printf("Failed to migrate the database: %w", err)
+	// 	return
+	// }
+	// fmt.Println("Succesfully ping the database")
+
+	// initialize a config var
+	// var cfg config
+
+	app := &application{
+		config: Configs(),
+		logger: logger,
+		models: data.NewModels(db.DB),
 	}
-	fmt.Println("Succesfully ping the database")
 
 	err = app.serve()
 

@@ -18,7 +18,7 @@ type config struct {
 	env  string
 }
 
-func (c *config) configs() *config {
+func Configs() *config {
 
 	// Load the .env file
 	err := godotenv.Load()
