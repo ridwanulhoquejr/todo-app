@@ -23,11 +23,14 @@ func NewDatabase() (*Database, error) {
 		os.Getenv("POSTGRES_PASSWORD"),
 		os.Getenv("SSL_MODE"),
 	)
+	fmt.Printf("db connection string: %s", dsn)
 
 	dbConn, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return &Database{}, fmt.Errorf("could not cnnect to the databse: %w", err)
 	}
+
+	fmt.Println("successfully connected to the db")
 	return &Database{
 		DB: dbConn,
 	}, nil

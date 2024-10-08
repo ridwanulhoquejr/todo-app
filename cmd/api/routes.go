@@ -19,6 +19,7 @@ func (app *application) routes() chi.Router {
 		r.Get("/{id}", app.singleTodoHandler)
 		r.Get("/all", func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("Hello from GET ALL of todos\n"))
+			app.logger.Println("in todos get all")
 		})
 		// r.Post("", app.createTodoHandler)
 		r.Post("/", func(w http.ResponseWriter, r *http.Request) {
@@ -39,9 +40,8 @@ func (app *application) routes() chi.Router {
 
 	// user route group
 	r.Group(func(r chi.Router) {
-		r.Get("/users/{id}", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("Hello, from GET Method of Users\n"))
-		})
+		r.Post("/users", app.createUserHandler)
+		// r.Get("/", app.createUserHandler)
 	})
 
 	return r

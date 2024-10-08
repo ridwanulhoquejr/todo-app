@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// our response wrapper!
 type envelope map[string]any
 
 // readJSON: convert json data to go-struct data
