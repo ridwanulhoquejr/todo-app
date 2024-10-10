@@ -91,9 +91,23 @@ func (app *application) readJSON(
 
 // writeJSON: convert go-struct to json data
 func (app *application) writeJSON(
-	w http.ResponseWriter, status int, data envelope, headers http.Header) error {
+	w http.ResponseWriter, status int, data any, headers http.Header) error {
 
-	js, err := json.Marshal(data)
+	var rsp envelope
+
+	// different responses based on the status code!
+	// 400 - 499: fail
+	// 500 - 599+: error
+	// 200 - 399: success
+	if status >= 400 && status < 500 {
+		rsp = envelope{"status": "fail", "details": data}
+	} else if status >= 500 {
+		rsp = envelope{"status": "error", "code": status, "message": data}
+	} else {
+		rsp = envelope{"status": "success", "data": data}
+	}
+
+	js, err := json.Marshal(rsp)
 	if err != nil {
 		return err
 	}

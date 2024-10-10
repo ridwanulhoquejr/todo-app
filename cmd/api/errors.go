@@ -13,9 +13,8 @@ func (app *application) URLNotFound(w http.ResponseWriter, r *http.Request) {
 func (app *application) errorResponse(
 	w http.ResponseWriter, r *http.Request, status int, message any,
 ) {
-	env := envelope{"error": message}
 
-	err := app.writeJSON(w, status, env, nil)
+	err := app.writeJSON(w, status, message, nil)
 	if err != nil {
 		w.WriteHeader(status)
 	}

@@ -20,16 +20,12 @@ func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request
 		Password string `json:"password"`
 	}
 
-	app.logger.Println("In the user handler")
-
 	// use our readJSON method for converting the JSON
 	err := app.readJSON(w, r, &payload)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
-
-	app.logger.Println("Passed #1. payload succesfully extracted")
 
 	// 2. Payload to User (entity) convertion
 	// Copy the data from the request body into a new User struct.
@@ -44,8 +40,6 @@ func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request
 		app.serverErrorResponse(w, r, err)
 	}
 
-	app.logger.Println("Passed #2. payload to entity")
-
 	// 3. Validation
 	v := validator.New()
 
@@ -55,7 +49,6 @@ func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
-	app.logger.Println("Passed #3")
 
 	// 4. perform the db transactions
 	err = app.models.User.Insert(&user)
@@ -66,19 +59,16 @@ func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request
 			app.failedValidationResponse(w, r, v.Errors)
 
 		default:
-			app.logger.Printf("error: %s", err.Error())
 			app.serverErrorResponse(w, r, err)
 		}
 		return
 	}
-	app.logger.Println("Passed #4 !")
 
 	// 5. return the response!
-	err = app.writeJSON(w, http.StatusCreated, envelope{"data": user, "status": http.StatusCreated}, nil)
+	err = app.writeJSON(w, http.StatusCreated, user, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
 	}
-
-	app.logger.Println("Passed #5 !")
+	return
 }

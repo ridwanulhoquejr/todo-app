@@ -74,8 +74,6 @@ func (p *password) Matches(plaintextPassword string) (bool, error) {
 // database methods
 func (m *UserModel) Insert(user *User) error {
 
-	fmt.Println("in the data -> Insert method")
-
 	query :=
 		`
 		INSERT INTO 
@@ -91,14 +89,12 @@ func (m *UserModel) Insert(user *User) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	fmt.Println("in the data -> Before QueryContext")
 	// run the db query
 	// then Scan the returning values to the user struct
 	err := m.DB.QueryRowContext(ctx, query, args...).Scan(
 		&user.ID,
 		&user.CreationTime,
 	)
-	fmt.Println("in the data ->After QueryRowContext")
 
 	// check if there is any error!
 	if err != nil {

@@ -21,10 +21,8 @@ func (app *application) routes() chi.Router {
 			w.Write([]byte("Hello from GET ALL of todos\n"))
 			app.logger.Println("in todos get all")
 		})
-		// r.Post("", app.createTodoHandler)
-		r.Post("/", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("Hello, from POST Method of Todos\n"))
-		})
+		r.Post("/", app.createTodoHandler)
+
 		// r.Patch("", app.updateTodoHandler)
 		r.Patch("/{id}", func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("Hello, from PATCH Method of Todos\n"))
