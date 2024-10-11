@@ -16,11 +16,8 @@ func (app *application) routes() chi.Router {
 
 	// todo routes group
 	r.Route("/todos", func(r chi.Router) {
-		r.Get("/{id}", app.singleTodoHandler)
-		r.Get("/all", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("Hello from GET ALL of todos\n"))
-			app.logger.Println("in todos get all")
-		})
+		r.Get("/{id}", app.getTodoHandler)
+		r.Get("/all", app.getAllTodoHandler)
 		r.Post("/", app.createTodoHandler)
 
 		// r.Patch("", app.updateTodoHandler)

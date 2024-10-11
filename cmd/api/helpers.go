@@ -14,6 +14,15 @@ import (
 // our response wrapper!
 type envelope map[string]any
 
+// our response wrapper!
+// i use struct bcz map type json.Marshal ordered alphatically, where struct won't
+type Response struct {
+	Status  string `json:"status"`
+	Code    int    `json:"code,omitempty"`
+	Details any    `json:"details,omitempty"`
+	Data    any    `json:"data,omitempty"`
+}
+
 // readJSON: convert json data to go-struct data
 func (app *application) readJSON(
 	w http.ResponseWriter, r *http.Request, dst any) error {
@@ -93,18 +102,27 @@ func (app *application) readJSON(
 func (app *application) writeJSON(
 	w http.ResponseWriter, status int, data any, headers http.Header) error {
 
-	var rsp envelope
+	rsp := Response{}
 
 	// different responses based on the status code!
 	// 400 - 499: fail
 	// 500 - 599+: error
 	// 200 - 399: success
 	if status >= 400 && status < 500 {
-		rsp = envelope{"status": "fail", "details": data}
+		rsp = Response{
+			Status:  "fail",
+			Details: data,
+		}
 	} else if status >= 500 {
-		rsp = envelope{"status": "error", "code": status, "message": data}
+		rsp = Response{
+			Status:  "error",
+			Details: data,
+		}
 	} else {
-		rsp = envelope{"status": "success", "data": data}
+		rsp = Response{
+			Status: "success",
+			Data:   data,
+		}
 	}
 
 	js, err := json.Marshal(rsp)

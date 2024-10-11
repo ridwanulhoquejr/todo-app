@@ -1,22 +1,61 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/ridwanulhoquejr/todo-app/internal/data"
 	"github.com/ridwanulhoquejr/todo-app/internal/validator"
 )
 
-func (app *application) singleTodoHandler(w http.ResponseWriter, r *http.Request) {
+const (
+	invalidPathParam = "invalid path parameter: path parameter must be greater than zero"
+)
+
+func (app *application) getTodoHandler(w http.ResponseWriter, r *http.Request) {
 
 	id, err := app.readIDParam(r)
 	if err != nil {
-		app.writeJSON(w, http.StatusBadRequest, envelope{"error": err.Error()}, nil)
+		app.writeJSON(w, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+	if id <= 0 {
+		app.writeJSON(w, http.StatusBadRequest, invalidPathParam, nil)
 		return
 	}
 
-	app.writeJSON(w, http.StatusOK, envelope{"id": id}, nil)
+	todo, err := app.models.Todo.Get(id, 1)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
 
+	err = app.writeJSON(w, http.StatusOK, todo, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+}
+
+func (app *application) getAllTodoHandler(w http.ResponseWriter, r *http.Request) {
+
+	todos, err := app.models.Todo.GetAll(1, 10, 0)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusOK, todos, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
 }
 
 func (app *application) createTodoHandler(w http.ResponseWriter, r *http.Request) {
@@ -57,12 +96,16 @@ func (app *application) createTodoHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// When sending a HTTP response, we want to include a Location header to let the
+	// client know which URL they can find the newly-created resource at.
+	headers := make(http.Header)
+	headers.Set("Location", fmt.Sprintf("/todos/%d", todo.ID))
+
 	// 5. return response
-	err = app.writeJSON(w, http.StatusCreated, todo, nil)
+	err = app.writeJSON(w, http.StatusCreated, todo, headers)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
 	}
-
 	return
 }

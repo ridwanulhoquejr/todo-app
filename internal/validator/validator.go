@@ -1,6 +1,7 @@
 package validator
 
 import (
+	"fmt"
 	"regexp"
 )
 
@@ -38,7 +39,9 @@ func (v *Validator) AddError(key, message string) {
 
 // Check adds an error message to the map only if a validation check is not 'ok'.
 func (v *Validator) Check(ok bool, key, message string) {
+	fmt.Printf("is ok, before invert: %t", ok)
 	if !ok {
+		fmt.Printf("is ok, after invert: %t", ok)
 		v.AddError(key, message)
 	}
 }
