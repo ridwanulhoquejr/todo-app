@@ -16,7 +16,7 @@ type envelope map[string]any
 
 // our response wrapper!
 // i use struct bcz map type json.Marshal ordered alphatically, where struct won't
-type Response struct {
+type APIResponse struct {
 	Status  string `json:"status"`
 	Code    int    `json:"code,omitempty"`
 	Details any    `json:"details,omitempty"`
@@ -102,24 +102,24 @@ func (app *application) readJSON(
 func (app *application) writeJSON(
 	w http.ResponseWriter, status int, data any, headers http.Header) error {
 
-	rsp := Response{}
+	rsp := APIResponse{}
 
 	// different responses based on the status code!
 	// 400 - 499: fail
 	// 500 - 599+: error
 	// 200 - 399: success
 	if status >= 400 && status < 500 {
-		rsp = Response{
+		rsp = APIResponse{
 			Status:  "fail",
 			Details: data,
 		}
 	} else if status >= 500 {
-		rsp = Response{
+		rsp = APIResponse{
 			Status:  "error",
 			Details: data,
 		}
 	} else {
-		rsp = Response{
+		rsp = APIResponse{
 			Status: "success",
 			Data:   data,
 		}
@@ -153,7 +153,7 @@ func (app *application) readIDParam(r *http.Request) (int64, error) {
 	id, err := strconv.ParseInt(param, 10, 64)
 
 	if err != nil {
-		return 0, errors.New("invalid path parameter for id")
+		return 0, errors.New("invalid path parameter given for id")
 	}
 
 	return id, nil

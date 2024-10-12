@@ -128,9 +128,11 @@ func (m *TodoModel) GetAll(userId, limit, offset int64) ([]*Todo, error) {
 			&todo.CreationTime,
 			&todo.Version,
 		)
+		// handle the Scan err
 		if err != nil {
 			return nil, err
 		}
+
 		todos = append(todos, &todo)
 	}
 	// When the rows.Next() loop has finished, call rows.Err() to retrieve any error
@@ -142,10 +144,60 @@ func (m *TodoModel) GetAll(userId, limit, offset int64) ([]*Todo, error) {
 	return todos, nil
 }
 
-func (m *TodoModel) Update(user *User) error {
+func (m *TodoModel) Update(userID int64, todo *Todo) error {
+	query := `
+		UPDATE todo
+			SET
+				title = $1,
+				description = $2,
+				completed = $3,
+				version = version +1
+			WHERE id = $4
+				AND user_id = $5
+				AND version = $6
+		RETURNING version
+	`
+	args := []any{todo.Title, todo.Descripton, todo.Completed, todo.ID, userID, todo.Version}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&todo.Version)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return ErrEditConflict
+		default:
+			return err
+		}
+	}
 	return nil
 }
-func (m *TodoModel) Delete(id int64) error {
+
+func (m *TodoModel) Delete(id, userID int64) error {
+
+	if id < 1 {
+		return ErrRecordNotFound
+	}
+
+	query := `DELETE from todo WHERE id = $1 and user_id = $2`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	result, err := m.DB.ExecContext(ctx, query, id, userID)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return ErrRecordNotFound
+	}
+
 	return nil
 }
 

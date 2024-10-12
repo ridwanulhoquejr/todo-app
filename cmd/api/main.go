@@ -29,7 +29,6 @@ func main() {
 		logger.Fatal("Failed to connect with database: %w", err)
 		return
 	}
-
 	defer db.DB.Close()
 
 	// if err := db.MigrateDB(); err != nil {
