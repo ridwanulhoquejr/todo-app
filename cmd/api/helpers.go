@@ -6,9 +6,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/ridwanulhoquejr/todo-app/internal/validator"
 )
 
 // our response wrapper!
@@ -98,34 +102,35 @@ func (app *application) readJSON(
 	return nil
 }
 
+func createAPIResponse(status int, data any) APIResponse {
+	// Create a default response structure
+	rsp := APIResponse{
+		Code: status,
+	}
+
+	// Set status and response fields based on the status code
+	switch {
+	case status >= 400 && status < 500:
+		rsp.Status = "fail"
+		rsp.Details = data
+	case status >= 500:
+		rsp.Status = "error"
+		rsp.Details = data
+	default:
+		rsp.Status = "success"
+		rsp.Data = data
+	}
+
+	return rsp
+}
+
 // writeJSON: convert go-struct to json data
 func (app *application) writeJSON(
 	w http.ResponseWriter, status int, data any, headers http.Header) error {
 
-	rsp := APIResponse{}
+	response := createAPIResponse(status, data)
 
-	// different responses based on the status code!
-	// 400 - 499: fail
-	// 500 - 599+: error
-	// 200 - 399: success
-	if status >= 400 && status < 500 {
-		rsp = APIResponse{
-			Status:  "fail",
-			Details: data,
-		}
-	} else if status >= 500 {
-		rsp = APIResponse{
-			Status:  "error",
-			Details: data,
-		}
-	} else {
-		rsp = APIResponse{
-			Status: "success",
-			Data:   data,
-		}
-	}
-
-	js, err := json.Marshal(rsp)
+	js, err := json.Marshal(response)
 	if err != nil {
 		return err
 	}
@@ -145,6 +150,76 @@ func (app *application) writeJSON(
 	w.Write([]byte(js))
 
 	return nil
+}
+
+// The readInt() helper reads a string value from the query string and converts it to an
+// integer before returning. If no matching key could be found it returns the provided
+// default value.
+func (app *application) readInt(
+	qs url.Values, key string, defaultValue int, v *validator.Validator) int {
+
+	// extract the query string from url.Values
+	value := qs.Get(key)
+	if value == "" {
+		return defaultValue
+	}
+
+	// convert query string value to int!
+	i, err := strconv.Atoi(value)
+	if err != nil {
+		v.AddError(key, "must be a number")
+		return defaultValue
+	}
+	return i
+}
+
+// read time.Time
+func (app *application) readTime(qs url.Values, key string, defaultValue time.Time) time.Time {
+
+	t := qs.Get(key)
+
+	// empty or null ? return default
+	if t == "" || t == "null" {
+		return defaultValue
+	}
+
+	// Parse the time string into a time.Time object
+	parsedTime, err := time.Parse("2006-01-02", t)
+	if err != nil {
+		app.logger.Printf("%s parsing error: %s\n", key, err)
+		return defaultValue
+	}
+
+	return parsedTime
+}
+
+// read boolean
+// TODO: need to complete this for completed field
+func (app *application) readBoolean(
+	qs url.Values, key, defaultValue string, v *validator.Validator) string {
+
+	return ""
+}
+
+// read string
+func (app *application) readString(
+	qs url.Values, key, defaultValue string) string {
+
+	s := qs.Get(key)
+	if s == "" || s == "null" {
+		return defaultValue
+	}
+	return s
+}
+
+// read CSV
+func (app *application) readCSV(qs url.Values, key string, defaultValue []string) []string {
+
+	csv := qs.Get(key)
+	if csv == "" {
+		return defaultValue
+	}
+	return strings.Split(csv, ",")
 }
 
 func (app *application) readIDParam(r *http.Request) (int64, error) {

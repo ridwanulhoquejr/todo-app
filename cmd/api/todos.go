@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/ridwanulhoquejr/todo-app/internal/data"
 	"github.com/ridwanulhoquejr/todo-app/internal/validator"
@@ -41,19 +42,60 @@ func (app *application) getTodoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (app *application) getAllTodoHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) getQueries(
+	r *http.Request, v *validator.Validator) data.Queries {
 
-	todos, err := app.models.Todo.GetAll(1, 10, 0)
+	qs := r.URL.Query()
+	q := data.Queries{}
+	// get the limit and Offset and assign it to our Queries.Pagination
+	q.Pagination.Page = app.readInt(qs, "page", 1, v)
+	q.Pagination.PageSize = app.readInt(qs, "page_size", 5, v)
+
+	// search query
+	q.Search.Title = app.readString(qs, "title", "")
+	// get the Filters
+	q.Sorts.Sort = app.readString(qs, "sort", "creation_time")
+	// add a Sortsafelist
+	q.Sorts.SafeList = []string{"title", "id", "creation_time", "-title", "-id", "-creation_time"}
+
+	// get time for range filters
+	now := time.Now()
+	oneMonthAgo := now.AddDate(0, -1, 0)
+	q.Filters.StartDate = app.readTime(qs, "start_date", oneMonthAgo)
+	q.Filters.EndDate = app.readTime(qs, "end_date", now)
+
+	return q
+}
+
+func (app *application) getAllTodoHandler(
+	w http.ResponseWriter, r *http.Request) {
+
+	v := validator.New()
+	queries := app.getQueries(r, v)
+
+	// execute validate check
+	if data.ValidateQueries(v, queries); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	err := app.writeJSON(w, http.StatusOK, queries, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
 	}
 
-	err = app.writeJSON(w, http.StatusOK, todos, nil)
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
-	}
+	// todos, err := app.models.Todo.GetAll(1, 10, 0)
+	// if err != nil {
+	// 	app.serverErrorResponse(w, r, err)
+	// 	return
+	// }
+
+	// err = app.writeJSON(w, http.StatusOK, todos, nil)
+	// if err != nil {
+	// 	app.serverErrorResponse(w, r, err)
+	// 	return
+	// }
 }
 
 func (app *application) createTodoHandler(w http.ResponseWriter, r *http.Request) {

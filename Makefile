@@ -1,7 +1,7 @@
 
 
 run:
-	go run ./cmd/api/ .
+	go run ./cmd/api/*.go
 
 createdb:
 	docker exec -it postgres12.2 createdb --username=nightbot --owner=nightbot todo_db
