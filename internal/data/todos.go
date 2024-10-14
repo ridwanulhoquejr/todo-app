@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/ridwanulhoquejr/todo-app/internal/validator"
@@ -94,17 +95,21 @@ func (m *TodoModel) Get(id, userId int64) (*Todo, error) {
 	return &todo, nil
 }
 
-func (m *TodoModel) GetAll(userId, limit, offset int64) ([]*Todo, error) {
+func (m *TodoModel) GetAll(userId int64, q Queries) ([]*Todo, error) {
 	query :=
-		`
-		SELECT id, title, description, completed, creation_time, version 
-			FROM todo
-			WHERE user_id = $1
-		ORDER BY creation_time DESC
-		LIMIT $2 OFFSET $3
-	`
+		fmt.Sprintf(`
+				SELECT
+					id, user_id, title, description, completed, creation_time, version
+				FROM todo
+					WHERE
+						user_id = $1
+						AND (to_tsvector('simple', title) @@ plainto_tsquery('simple', $2) OR $2 = '')
+						AND (creation_time BETWEEN $3 AND $4)
+				ORDER BY %s %s, id ASC
+				LIMIT $5 OFFSET $6`,
+			q.Sorts.sortColumn(), q.Sorts.sortDirection())
 
-	args := []any{userId, limit, offset}
+	args := []any{userId, q.Search.Title, q.Filters.StartDate, q.Filters.EndDate, q.Pagination.limit(), q.Pagination.offset()}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -122,6 +127,7 @@ func (m *TodoModel) GetAll(userId, limit, offset int64) ([]*Todo, error) {
 
 		err := rows.Scan(
 			&todo.ID,
+			&todo.UserID,
 			&todo.Title,
 			&todo.Descripton,
 			&todo.Completed,

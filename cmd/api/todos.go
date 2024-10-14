@@ -54,7 +54,7 @@ func (app *application) getQueries(
 	// search query
 	q.Search.Title = app.readString(qs, "title", "")
 	// get the Filters
-	q.Sorts.Sort = app.readString(qs, "sort", "creation_time")
+	q.Sorts.Sort = app.readString(qs, "sort", "-creation_time")
 	// add a Sortsafelist
 	q.Sorts.SafeList = []string{"title", "id", "creation_time", "-title", "-id", "-creation_time"}
 
@@ -67,8 +67,7 @@ func (app *application) getQueries(
 	return q
 }
 
-func (app *application) getAllTodoHandler(
-	w http.ResponseWriter, r *http.Request) {
+func (app *application) getAllTodoHandler(w http.ResponseWriter, r *http.Request) {
 
 	v := validator.New()
 	queries := app.getQueries(r, v)
@@ -79,23 +78,19 @@ func (app *application) getAllTodoHandler(
 		return
 	}
 
-	err := app.writeJSON(w, http.StatusOK, queries, nil)
+	todos, err := app.models.Todo.GetAll(1, queries)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		app.logger.Printf("error returned from getAll: %v\n", err)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusOK, todos, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
 	}
-
-	// todos, err := app.models.Todo.GetAll(1, 10, 0)
-	// if err != nil {
-	// 	app.serverErrorResponse(w, r, err)
-	// 	return
-	// }
-
-	// err = app.writeJSON(w, http.StatusOK, todos, nil)
-	// if err != nil {
-	// 	app.serverErrorResponse(w, r, err)
-	// 	return
-	// }
+	return
 }
 
 func (app *application) createTodoHandler(w http.ResponseWriter, r *http.Request) {

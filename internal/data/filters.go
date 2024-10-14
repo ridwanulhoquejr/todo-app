@@ -1,6 +1,7 @@
 package data
 
 import (
+	"strings"
 	"time"
 
 	"github.com/ridwanulhoquejr/todo-app/internal/validator"
@@ -50,4 +51,31 @@ func ValidateQueries(v *validator.Validator, q Queries) {
 	// check the Filters of star and end date
 	// v.Check(!(q.Filters.StartDate.After(q.Filters.EndDate)), "start_date", "start_date must be less or equal to the current date")
 	// v.Check(q.Filters.StartDate.Before(time.Now().AddDate(-1, 0, -1)), "start_date", "start_date must be in between less than 1 year of current date")
+}
+
+// Check that the client-provided Sort field matches one of the entries in our safelist
+// and if it does, extract the column name from the Sort field by stripping the leading
+// hyphen character (if one exists)
+func (s Sorts) sortColumn() string {
+	for _, safeValue := range s.SafeList {
+		if s.Sort == safeValue {
+			return strings.TrimPrefix(s.Sort, "-")
+		}
+	}
+	panic("unsafe sort parameters: " + s.Sort)
+}
+
+func (s Sorts) sortDirection() string {
+	if strings.HasPrefix(s.Sort, "-") {
+		return "DESC"
+	}
+	return "ASC"
+}
+
+func (p Pagination) limit() int {
+	return p.PageSize
+}
+
+func (p Pagination) offset() int {
+	return ((p.Page - 1) * p.PageSize)
 }
