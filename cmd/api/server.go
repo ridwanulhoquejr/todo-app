@@ -18,14 +18,18 @@ func (app *application) serve() error {
 		WriteTimeout: 30 * time.Second,
 	}
 
-	// Start the HTTP server.
-	app.logger.Printf("starting %s server on port %s", app.config.env, srv.Addr)
+	// Again, we use the PrintInfo() method to write a "starting server" message at the
+	// INFO level. But this time we pass a map containing additional properties (the
+	// operating environment and server address) as the final parameter.
+	app.logger.PrintInfo("starting server", map[string]string{
+		"addr": srv.Addr,
+		"env":  Configs().env,
+	})
 
 	err := srv.ListenAndServe()
 	if err != nil {
-		app.logger.Fatal(err)
+		app.logger.PrintFatal(err, nil)
 		return err
 	}
-
 	return nil
 }

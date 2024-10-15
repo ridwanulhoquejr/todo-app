@@ -78,14 +78,14 @@ func (app *application) getAllTodoHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	todos, err := app.models.Todo.GetAll(1, queries)
+	todos, metadata, err := app.models.Todo.GetAll(1, queries)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
-		app.logger.Printf("error returned from getAll: %v\n", err)
+		app.logger.PrintError(err, map[string]string{"todos": "error returned from GetAll db"})
 		return
 	}
 
-	err = app.writeJSON(w, http.StatusOK, todos, nil)
+	err = app.writeJSON(w, http.StatusOK, envelope{"metadata": metadata, "todos": todos}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
@@ -118,7 +118,7 @@ func (app *application) createTodoHandler(w http.ResponseWriter, r *http.Request
 	v := validator.New()
 
 	if data.ValidateTodo(v, &todo); !v.Valid() {
-		app.logger.Printf("validation error: %s", v.Errors)
+		app.logger.PrintError(err, map[string]string{"validation": "error returned from ValidateTodo"})
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
@@ -234,7 +234,7 @@ func (app *application) updateTodoHandler(w http.ResponseWriter, r *http.Request
 	v.Check(todo.Title != "", "title", "must be provided")
 
 	if !v.Valid() {
-		app.logger.Printf("validation error: %+v", v.Errors)
+		app.logger.PrintError(err, map[string]string{"todo-update": "error returned from update-todo validator"})
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}

@@ -186,7 +186,7 @@ func (app *application) readTime(qs url.Values, key string, defaultValue time.Ti
 	// Parse the time string into a time.Time object
 	parsedTime, err := time.Parse("2006-01-02", t)
 	if err != nil {
-		app.logger.Printf("%s parsing error: %s\n", key, err)
+		app.logger.PrintInfo("error while parsing datetime sort", nil)
 		return defaultValue
 	}
 

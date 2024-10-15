@@ -1,6 +1,7 @@
 package data
 
 import (
+	"math"
 	"strings"
 	"time"
 
@@ -39,6 +40,33 @@ type Queries struct {
 	Sorts      Sorts      `json:"sorts"`
 }
 
+// Define a new Metadata struct for holding the pagination metadata.
+type Metadata struct {
+	CurrentPage  int `json:"current_page,omitempty"`
+	PageSize     int `json:"page_size,omitempty"`
+	FirstPage    int `json:"first_page,omitempty"`
+	LastPage     int `json:"last_page,omitempty"`
+	TotalRecords int `json:"total_records,omitempty"`
+}
+
+// The calculateMetadata() function calculates the appropriate pagination metadata
+// values given the total number of records, current page, and page size values. Note
+// that the last page value is calculated using the math.Ceil() function, which rounds
+// up a float to the nearest integer. So, for example, if there were 12 records in total
+// and a page size of 5, the last page value would be math.Ceil(12/5) = 3.
+func calculateMetadata(totalRecords, page, pageSize int) Metadata {
+	if totalRecords == 0 {
+		return Metadata{}
+	}
+	return Metadata{
+		CurrentPage:  page,
+		PageSize:     pageSize,
+		FirstPage:    1,
+		LastPage:     int(math.Ceil(float64(totalRecords) / float64(pageSize))),
+		TotalRecords: totalRecords,
+	}
+}
+
 func ValidateQueries(v *validator.Validator, q Queries) {
 	v.Check(q.Pagination.Page > 0, "page", "must be greater than zero")
 	v.Check(q.Pagination.Page <= 10_100_000, "page", "must be maximum of 10 million")
@@ -62,6 +90,9 @@ func (s Sorts) sortColumn() string {
 			return strings.TrimPrefix(s.Sort, "-")
 		}
 	}
+	// this code should not be reached
+	// bcz it will block in the validation check
+	// in the given sort value is not in the safeList
 	panic("unsafe sort parameters: " + s.Sort)
 }
 

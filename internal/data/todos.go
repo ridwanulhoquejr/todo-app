@@ -95,11 +95,11 @@ func (m *TodoModel) Get(id, userId int64) (*Todo, error) {
 	return &todo, nil
 }
 
-func (m *TodoModel) GetAll(userId int64, q Queries) ([]*Todo, error) {
+func (m *TodoModel) GetAll(userId int64, q Queries) ([]*Todo, Metadata, error) {
 	query :=
 		fmt.Sprintf(`
 				SELECT
-					id, user_id, title, description, completed, creation_time, version
+					 count(*) OVER(), id, user_id, title, description, completed, creation_time, version
 				FROM todo
 					WHERE
 						user_id = $1
@@ -116,16 +116,18 @@ func (m *TodoModel) GetAll(userId int64, q Queries) ([]*Todo, error) {
 
 	rows, err := m.DB.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, Metadata{}, err
 	}
 	defer rows.Close()
 
 	todos := []*Todo{}
+	totalRecords := 0
 
 	for rows.Next() {
-		var todo Todo
 
+		var todo Todo
 		err := rows.Scan(
+			&totalRecords,
 			&todo.ID,
 			&todo.UserID,
 			&todo.Title,
@@ -136,18 +138,19 @@ func (m *TodoModel) GetAll(userId int64, q Queries) ([]*Todo, error) {
 		)
 		// handle the Scan err
 		if err != nil {
-			return nil, err
+			return nil, Metadata{}, err
 		}
-
 		todos = append(todos, &todo)
 	}
 	// When the rows.Next() loop has finished, call rows.Err() to retrieve any error
 	// that was encountered during the iteration.
 	if err := rows.Err(); err != nil {
-		return nil, nil
+		return nil, Metadata{}, nil
 	}
 
-	return todos, nil
+	// calculate the metadata by calling the metdata method
+	metadata := calculateMetadata(totalRecords, q.Pagination.Page, q.Pagination.PageSize)
+	return todos, metadata, nil
 }
 
 func (m *TodoModel) Update(userID int64, todo *Todo) error {
