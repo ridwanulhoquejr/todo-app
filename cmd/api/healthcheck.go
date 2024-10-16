@@ -2,14 +2,25 @@ package main
 
 import (
 	"net/http"
+	"time"
 )
 
 func (app *application) healthcheckHandler(w http.ResponseWriter, r *http.Request) {
 
-	w.Header().Set("Content-Type", "application/json")
+	env := envelope{
+		"status": "available",
+		"system_info": map[string]string{
+			"environment": app.config.env,
+			"version":     version,
+		},
+	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Hello Chi!"))
+	// for testing the Graceful shutdown!
+	time.Sleep(4 * time.Second)
 
-	// fmt.Fprintf(w, "succesfully ping\n")
+	err := app.writeJSON(w, http.StatusOK, env, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+
 }

@@ -85,7 +85,7 @@ func (app *application) getAllTodoHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"metadata": metadata, "todos": todos}, nil)
+	err = app.writeJSON(w, http.StatusOK, envelope{"todo": todos, "metadata": metadata}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return

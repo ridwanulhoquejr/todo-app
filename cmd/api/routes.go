@@ -1,13 +1,14 @@
 package main
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func (app *application) routes() chi.Router {
+func (app *application) routes() http.Handler {
 
 	r := chi.NewRouter()
 	r.Use(middleware.Timeout(30 * time.Second))
@@ -30,5 +31,5 @@ func (app *application) routes() chi.Router {
 		// r.Get("/", app.createUserHandler)
 	})
 
-	return r
+	return app.recoverPanic(r)
 }
