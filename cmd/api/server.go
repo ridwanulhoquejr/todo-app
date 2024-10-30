@@ -24,7 +24,7 @@ func (app *application) serve() error {
 	}
 
 	// Create a shutdownError channel. We will use this to receive any errors returned
-	// by the graceful Shutdown() function.
+	// by the graceful Shutdown() go-routine.
 	shutdownError := make(chan error)
 
 	// start a background go-routine

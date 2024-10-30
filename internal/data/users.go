@@ -23,7 +23,7 @@ type UserModel struct {
 }
 
 type User struct {
-	ID           string    `json:"id"`
+	ID           int64     `json:"id"`
 	Name         string    `json:"name"`
 	Email        string    `json:"email"`
 	Password     password  `json:"-"`
@@ -109,8 +109,38 @@ func (m *UserModel) Insert(user *User) error {
 	return nil
 }
 
-func (m *UserModel) Get(id int64) error {
-	return nil
+func (m *UserModel) GetByEmail(email string) (*User, error) {
+
+	query := `
+		SELECT 
+			id, name, email, password_hash, activated, creation_time
+		WHERE 
+			email = $1
+		LIMIT 1
+	`
+	var user User
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, email).Scan(
+		&user.ID,
+		&user.Name,
+		&user.Email,
+		&user.Password.hash,
+		&user.Activated,
+		&user.CreationTime,
+	)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+	return &user, nil
 }
 
 // validation methods for users
