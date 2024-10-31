@@ -10,7 +10,7 @@ import (
 	"github.com/ridwanulhoquejr/todo-app/internal/validator"
 )
 
-var invalidPathParam = errors.New("invalid id: path parameter must be greater than zero")
+var errInvalidPathParam = errors.New("invalid id: path parameter must be greater than zero")
 
 func (app *application) getTodoHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -20,7 +20,7 @@ func (app *application) getTodoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if id <= 0 {
-		app.badRequestResponse(w, r, invalidPathParam)
+		app.badRequestResponse(w, r, errInvalidPathParam)
 		return
 	}
 
@@ -69,6 +69,11 @@ func (app *application) getQueries(
 
 func (app *application) getAllTodoHandler(w http.ResponseWriter, r *http.Request) {
 
+	// extract the user info from r.Context()
+	user := app.contextGetUser(r)
+
+	fmt.Printf("--> User from authenticate middleware context: %+v", user)
+
 	v := validator.New()
 	queries := app.getQueries(r, v)
 
@@ -78,7 +83,7 @@ func (app *application) getAllTodoHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	todos, metadata, err := app.models.Todo.GetAll(1, queries)
+	todos, metadata, err := app.models.Todo.GetAll(user.ID, queries)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		app.logger.PrintError(err, map[string]string{"todos": "error returned from GetAll db"})
@@ -90,7 +95,6 @@ func (app *application) getAllTodoHandler(w http.ResponseWriter, r *http.Request
 		app.serverErrorResponse(w, r, err)
 		return
 	}
-	return
 }
 
 func (app *application) createTodoHandler(w http.ResponseWriter, r *http.Request) {
@@ -141,7 +145,6 @@ func (app *application) createTodoHandler(w http.ResponseWriter, r *http.Request
 		app.serverErrorResponse(w, r, err)
 		return
 	}
-	return
 }
 
 func (app *application) deleteTodoHandler(w http.ResponseWriter, r *http.Request) {
@@ -151,7 +154,7 @@ func (app *application) deleteTodoHandler(w http.ResponseWriter, r *http.Request
 		app.badRequestResponse(w, r, err)
 	}
 	if id <= 0 {
-		app.badRequestResponse(w, r, invalidPathParam)
+		app.badRequestResponse(w, r, errInvalidPathParam)
 		return
 	}
 
@@ -174,7 +177,7 @@ func (app *application) deleteTodoHandler(w http.ResponseWriter, r *http.Request
 		app.serverErrorResponse(w, r, err)
 		return
 	}
-	return
+
 }
 
 func (app *application) updateTodoHandler(w http.ResponseWriter, r *http.Request) {
@@ -187,7 +190,7 @@ func (app *application) updateTodoHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	if id <= 0 {
-		app.badRequestResponse(w, r, invalidPathParam)
+		app.badRequestResponse(w, r, errInvalidPathParam)
 		return
 	}
 

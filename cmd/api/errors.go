@@ -56,7 +56,18 @@ func (app *application) invalidAuthenticationTokenResponse(w http.ResponseWriter
 	// remind the client that we expect them to authenticate using a bearer token.
 	w.Header().Set("WWW-Authenticate", "Bearer")
 
-	message := "invalid or missing authentication token"
+	message := "invalid or expired authentication token"
+	app.errorResponse(w, r, http.StatusUnauthorized, message)
+}
+
+// invalid token response
+func (app *application) missingAuthenticationTokenResponse(w http.ResponseWriter, r *http.Request) {
+
+	// 	Note: We’re including a WWW-Authenticate: Bearer header here to help inform or
+	// remind the client that we expect them to authenticate using a bearer token.
+	w.Header().Set("WWW-Authenticate", "Bearer")
+
+	message := "missing authentication token"
 	app.errorResponse(w, r, http.StatusUnauthorized, message)
 }
 
@@ -88,6 +99,7 @@ func (app *application) badRequestResponse(
 func (app *application) serverErrorResponse(
 	w http.ResponseWriter, r *http.Request, err error,
 ) {
+	app.logError(r, err)
 	msg := "the server encountered a problem and could not process your request"
 	app.errorResponse(w, r, http.StatusInternalServerError, msg)
 }

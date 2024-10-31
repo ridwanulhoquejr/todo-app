@@ -70,5 +70,4 @@ func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request
 		app.serverErrorResponse(w, r, err)
 		return
 	}
-	return
 }

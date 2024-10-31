@@ -9,9 +9,9 @@ import (
 	"github.com/ridwanulhoquejr/todo-app/internal/validator"
 )
 
-func (app *application) delelteTokenHandler(w http.ResponseWriter, r *http.Request) {
+// func (app *application) delelteTokenHandler(w http.ResponseWriter, r *http.Request) {
 
-}
+// }
 func (app *application) createTokenHandler(w http.ResponseWriter, r *http.Request) {
 
 	// extract the payload
@@ -72,7 +72,7 @@ func (app *application) createTokenHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	err = app.writeJSON(w, http.StatusCreated, envelope{"token": token}, nil)
+	err = app.writeJSON(w, http.StatusCreated, token, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return

@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -109,11 +110,62 @@ func (m *UserModel) Insert(user *User) error {
 	return nil
 }
 
+func (m *UserModel) GetByToken(scope, tokenPlainText string) (*User, error) {
+
+	// Calculate the SHA-256 hash of the plaintext token provided by the client.
+	// Remember that this returns a byte *array* with length 32, not a slice.
+	tokenHash := sha256.Sum256([]byte(tokenPlainText))
+
+	// Set up the SQL query.
+	query := `
+		SELECT 
+			users.id, users.creation_time, users.name, users.email, users.password_hash, users.activated
+		FROM users
+				INNER JOIN token
+				ON users.id = token.user_id
+			WHERE token.hash = $1
+				AND token.scope = $2
+				AND token.expiry > $3
+		`
+
+	// Create a slice containing the query arguments. Notice how we use the [:] operator
+	// to get a slice containing the token hash, rather than passing in the array (which
+	// is not supported by the pq driver), and that we pass the current time as the
+	// value to check against the token expiry.
+	args := []any{tokenHash[:], scope, time.Now()}
+
+	var user User
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(
+		&user.ID,
+		&user.CreationTime,
+		&user.Name,
+		&user.Email,
+		&user.Password.hash,
+		&user.Activated,
+	)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	return &user, nil
+}
+
 func (m *UserModel) GetByEmail(email string) (*User, error) {
 
 	query := `
 		SELECT 
 			id, name, email, password_hash, activated, creation_time
+		FROM users
 		WHERE 
 			email = $1
 		LIMIT 1
