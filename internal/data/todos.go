@@ -175,7 +175,7 @@ func (m *TodoModel) Update(userID int64, todo *Todo) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			return ErrEditConflict
+			return ErrRecordNotFound
 		default:
 			return err
 		}

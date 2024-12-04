@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -195,11 +194,11 @@ func (app *application) readTime(qs url.Values, key string, defaultValue time.Ti
 
 // read boolean
 // TODO: need to complete this for completed field
-func (app *application) readBoolean(
-	qs url.Values, key, defaultValue string, v *validator.Validator) string {
+// func (app *application) readBoolean(
+// 	qs url.Values, key, defaultValue string, v *validator.Validator) string {
 
-	return ""
-}
+// 	return ""
+// }
 
 // read string
 func (app *application) readString(
@@ -213,14 +212,14 @@ func (app *application) readString(
 }
 
 // read CSV
-func (app *application) readCSV(qs url.Values, key string, defaultValue []string) []string {
+// func (app *application) readCSV(qs url.Values, key string, defaultValue []string) []string {
 
-	csv := qs.Get(key)
-	if csv == "" {
-		return defaultValue
-	}
-	return strings.Split(csv, ",")
-}
+// 	csv := qs.Get(key)
+// 	if csv == "" {
+// 		return defaultValue
+// 	}
+// 	return strings.Split(csv, ",")
+// }
 
 func (app *application) readIDParam(r *http.Request) (int64, error) {
 

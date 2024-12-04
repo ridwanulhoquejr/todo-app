@@ -12,36 +12,6 @@ import (
 
 var errInvalidPathParam = errors.New("invalid id: path parameter must be greater than zero")
 
-func (app *application) getTodoHandler(w http.ResponseWriter, r *http.Request) {
-
-	id, err := app.readIDParam(r)
-	if err != nil {
-		app.badRequestResponse(w, r, err)
-		return
-	}
-	if id <= 0 {
-		app.badRequestResponse(w, r, errInvalidPathParam)
-		return
-	}
-
-	todo, err := app.models.Todo.Get(id, 1)
-	if err != nil {
-		switch {
-		case errors.Is(err, data.ErrRecordNotFound):
-			app.notFoundResponse(w, r)
-		default:
-			app.serverErrorResponse(w, r, err)
-		}
-		return
-	}
-
-	err = app.writeJSON(w, http.StatusOK, todo, nil)
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
-	}
-}
-
 func (app *application) getQueries(
 	r *http.Request, v *validator.Validator) data.Queries {
 
@@ -65,6 +35,40 @@ func (app *application) getQueries(
 	q.Filters.EndDate = app.readTime(qs, "end_date", now)
 
 	return q
+}
+
+func (app *application) getTodoHandler(w http.ResponseWriter, r *http.Request) {
+
+	// extract the user info from r.Context()
+	user := app.contextGetUser(r)
+
+	id, err := app.readIDParam(r)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	if id <= 0 {
+		app.badRequestResponse(w, r, errInvalidPathParam)
+		return
+	}
+
+	todo, err := app.models.Todo.Get(id, user.ID)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusOK, todo, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
 }
 
 func (app *application) getAllTodoHandler(w http.ResponseWriter, r *http.Request) {
@@ -149,6 +153,9 @@ func (app *application) createTodoHandler(w http.ResponseWriter, r *http.Request
 
 func (app *application) deleteTodoHandler(w http.ResponseWriter, r *http.Request) {
 
+	// get the user from the auth_context
+	user := app.contextGetUser(r)
+
 	id, err := app.readIDParam(r)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
@@ -160,7 +167,7 @@ func (app *application) deleteTodoHandler(w http.ResponseWriter, r *http.Request
 
 	// call the db method
 	// TODO: user_id should come from the AUTHENTICATIONS!
-	err = app.models.Todo.Delete(id, 1)
+	err = app.models.Todo.Delete(id, user.ID)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
@@ -182,6 +189,9 @@ func (app *application) deleteTodoHandler(w http.ResponseWriter, r *http.Request
 
 func (app *application) updateTodoHandler(w http.ResponseWriter, r *http.Request) {
 
+	// get the user from the auth_context
+	user := app.contextGetUser(r)
+
 	// get the id of the Todo
 	id, err := app.readIDParam(r)
 	if err != nil {
@@ -196,7 +206,7 @@ func (app *application) updateTodoHandler(w http.ResponseWriter, r *http.Request
 
 	// retrieve the Todo from DB using that id
 	// TODO: user_id should come from the AUTHENTICATIONS!
-	todo, err := app.models.Todo.Get(id, 1)
+	todo, err := app.models.Todo.Get(id, user.ID)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
@@ -244,7 +254,7 @@ func (app *application) updateTodoHandler(w http.ResponseWriter, r *http.Request
 
 	// call the db method
 	// TODO: user_id should come from the AUTHENTICATIONS!
-	err = app.models.Todo.Update(1, todo)
+	err = app.models.Todo.Update(user.ID, todo)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrEditConflict):
