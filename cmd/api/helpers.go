@@ -101,18 +101,18 @@ func (app *application) readJSON(
 	return nil
 }
 
-func createAPIResponse(status int, data any) APIResponse {
+func createAPIResponse(statusCode int, data any) APIResponse {
 	// Create a default response structure
 	rsp := APIResponse{
-		Code: status,
+		Code: statusCode,
 	}
 
 	// Set status and response fields based on the status code
 	switch {
-	case status >= 400 && status < 500:
+	case statusCode >= 400 && statusCode < 500:
 		rsp.Status = "fail"
 		rsp.Details = data
-	case status >= 500:
+	case statusCode >= 500:
 		rsp.Status = "error"
 		rsp.Details = data
 	default:

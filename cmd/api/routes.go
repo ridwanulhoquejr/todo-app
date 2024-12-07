@@ -15,6 +15,7 @@ func (app *application) routes() http.Handler {
 
 	// override built-in NotFound handler
 	r.NotFound(app.URLNotFound)
+	r.MethodNotAllowed(app.methodNotAllowedResponse)
 	r.Get("/v1/healthcheck", app.healthcheckHandler)
 
 	// todo routes group
