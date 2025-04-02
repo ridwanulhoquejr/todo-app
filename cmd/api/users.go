@@ -27,6 +27,11 @@ func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	app.logger.PrintInfo("USER PAYLOAD Parsed", map[string]string{
+		"name":  payload.Name,
+		"email": payload.Email,
+	})
+
 	// 2. Payload to User (entity) convertion
 	// Copy the data from the request body into a new User struct.
 	user := data.User{
@@ -39,6 +44,9 @@ func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
+	app.logger.PrintInfo("USER Password", map[string]string{
+		"password": payload.Password,
+	})
 
 	// 3. Validation
 	v := validator.New()
@@ -49,6 +57,10 @@ func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
+
+	app.logger.PrintInfo("USER Validation", map[string]string{
+		"validation": "success",
+	})
 
 	// 4. perform the db transactions
 	err = app.models.User.Insert(&user)

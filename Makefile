@@ -18,7 +18,7 @@ migrate_cli:
 	migrate create -seq -ext=.sql -dir=./migrations $$name
 
 migrateup:
-	migrate -path ./migrations -database "postgres://root:root@localhost:5432/todo?sslmode=disable" -verbose up
+	migrate -path ./migrations -database "postgres://todo:root@localhost:5432/todo_db?sslmode=disable" -verbose up
 
 migratedown:
 	migrate -path ./migrations -database "postgres://root:root@localhost:5432/todo?sslmode=disable" -verbose down

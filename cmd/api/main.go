@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"os"
 
 	"github.com/ridwanulhoquejr/todo-app/internal/data"
@@ -42,6 +44,11 @@ func main() {
 	// 	return
 	// }
 	// fmt.Println("Succesfully ping the database")
+	if err := db.Ping(context.Background()); err != nil {
+		logger.PrintFatal(err, nil)
+		return
+	}
+	fmt.Println("Succesfully ping the database")
 
 	app := &application{
 		config: Configs(),
