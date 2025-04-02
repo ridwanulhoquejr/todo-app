@@ -3,7 +3,7 @@ version: '3.8'
 services:
   db:
     image: postgres:12.2-alpine
-    container_name: "postgres12.2"
+    container_name: "todo-postgres12"
     ports:
       - "5432:5432"
     tty: true
